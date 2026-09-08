@@ -1,0 +1,276 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -192,
+        -32
+      ],
+      "id": "46cb2eaa-84e6-4c1c-8418-7cc062df05ad",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EmHR4aHVLNeEkurr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputText": "={{ $json.snippet }}",
+        "categories": {
+          "categories": [
+            {
+              "category": "Email with order keyword ",
+              "description": "If email like you have a new order "
+            },
+            {
+              "category": "hello world",
+              "description": "If anyone greet like hello"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textClassifier",
+      "typeVersion": 1.1,
+      "position": [
+        -48,
+        -32
+      ],
+      "id": "bfbe341b-bfc2-4d2d-a82f-290f67ff65f9",
+      "name": "Text Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        160
+      ],
+      "id": "71c73bc3-4642-4730-ab5c-86e36dcffc87",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You act as a copywriter  and my personal email assistant, you will reply to this email {{ $('Gmail Trigger').item.json.snippet }}\n\nYou have to reply in two types one you give subject line and one inner email responce."
+            }
+          ]
+        },
+        "simplify": false,
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        320,
+        -128
+      ],
+      "id": "c973796a-c466-4b7f-911c-b3ed9e5a60ed",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Gmail Trigger').item.json.Subject }}",
+        "message": "={{ $('Gmail Trigger').item.json.snippet }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        -128
+      ],
+      "id": "74411455-68f5-45ce-a26d-b704d0f59810",
+      "name": "Create a draft",
+      "webhookId": "e5ab4925-a03f-4d15-95e0-2ea982093061",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EmHR4aHVLNeEkurr",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=You act as a copywriter  and my personal email assistant, you will reply to this email \n{{ $('Gmail Trigger').item.json.snippet }}\nYou have to reply in two types one you give subject line and one inner email responce."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        320,
+        64
+      ],
+      "id": "501e0195-5ec1-4a54-bb18-eaa88c1a8253",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('Text Classifier').item.json.Subject }}",
+        "message": "={{ $json.output[0].content[0].text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        64
+      ],
+      "id": "1e6e0199-f952-4495-8e66-05ef8cc25736",
+      "name": "Create a draft1",
+      "webhookId": "558346c4-8be1-444b-b4b9-be87dad9bc62",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "EmHR4aHVLNeEkurr",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Classifier": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Create a draft1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1,
+    "availableInMCP": false
+  },
+  "versionId": "ebade103-afbe-4d69-869c-f2c0940261a5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9fff023c3e5ae48d6490fcc1e004cc454ce103d367c5d7b2ce9155f7bcc62cb2"
+  },
+  "nodeGroups": [],
+  "id": "QUaEqkaqSOOPlycw",
+  "tags": []
+}
